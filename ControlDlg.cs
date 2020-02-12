@@ -111,6 +111,8 @@ namespace FaceController
         private static bool dataSendRequested = false;
 
         private static System.Timers.Timer aTimer;
+        private static System.Timers.Timer bTimer; //반복함수 호출을 위한 TIMER
+
 
         Host host;
         GazePointDataStream gazePointDataStream;
@@ -1127,13 +1129,21 @@ namespace FaceController
             return DateTime.Now;
         }
 
+        private void browseLoop(object sender, ElapsedEventArgs e)  //반복호출함수
+        {
+            float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
+            oriToSend.roll += tempt;
+            dataSendRequested = true;
+            //throw new NotImplementedException();
+        }
+
 
         public void browse_expression(int check, browseList bList)
         {
             //표정을 불러올 경우, 순간적으로 바뀌지 않고 천천히 바뀌게 만들고자 하는 함수
             //버튼을 클릭시 읽어오기만 하고 값을 대입하는 것은 여기서 작동하도록 해야 할 것 같음
             //그러면 버튼 클릭시 읽어오는 변수들을 전역으로 변경해야 할 듯...
-            float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
+            //float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
 
             if (check == 1) //버튼이 한번 눌렸을 경우(초기 시작)
             {
@@ -1141,14 +1151,18 @@ namespace FaceController
                 comparison = new float[] {bList.headRoll, bList.headPitch, bList.headYaw, bList.eyeGazeX, bList.eyeGazeY, bList.browFurrow, bList.browRaise, bList.cheekRaise, bList.chinRaise, bList.dimper, bList.eyeClosure, bList.eyeWiden, bList.jawDrop, bList.lidTighten, bList.lipCornerDepressor, bList.lipPucker, bList.mouthOpen, bList.noseWrinkle, bList.smile, bList.upperLipRaise};
                 //float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
 
-                for (int i = 0; i< 10; i++)
-                {
-                    //Thread.Sleep(3000); Delay, Sleep 둘다 가능
-                    oriToSend.roll += tempt;
-                    dataSendRequested = true;
-                    Delay(2000); //느리고 자연스러운 속도
-                    //Thread.Sleep(3000);
-                }
+                //for (int i = 0; i< 10; i++) 
+                //{
+                //    //Thread.Sleep(3000); Delay, Sleep 둘다 가능
+                //    oriToSend.roll += tempt;
+                //    dataSendRequested = true;
+                //    Delay(3000); //느리고 자연스러운 속도 
+                //}
+
+                bTimer = new System.Timers.Timer(100);
+                bTimer.Elapsed += browseLoop;
+                bTimer.AutoReset = true;
+                bTimer.Enabled = true;
             }
             else //browse버튼이 2번 이상 눌렸을 경우(또 불러오는가)
             {
@@ -1164,21 +1178,30 @@ namespace FaceController
                 if (bList.headRoll != comparison[0])
                 {
                     comparison = new float[] { bList.headRoll, bList.headPitch, bList.headYaw, bList.eyeGazeX, bList.eyeGazeY, bList.browFurrow, bList.browRaise, bList.cheekRaise, bList.chinRaise, bList.dimper, bList.eyeClosure, bList.eyeWiden, bList.jawDrop, bList.lidTighten, bList.lipCornerDepressor, bList.lipPucker, bList.mouthOpen, bList.noseWrinkle, bList.smile, bList.upperLipRaise};
-                    
-                    for (int i = 0; i < 10; i++)
-                    {
-                        //Thread.Sleep(3000); Delay, Sleep 둘다 가능
-                        oriToSend.roll += tempt;
-                        dataSendRequested = true;
-                        Delay(2000); //느리고 자연스러운 속도
-                                    //Thread.Sleep(3000);
-                    }
+
+                    //for (int i = 0; i < 10; i++)
+                    //{
+                    //    //Thread.Sleep(3000); Delay, Sleep 둘다 가능
+                    //    oriToSend.roll += tempt;
+                    //    dataSendRequested = true;
+                    //    Delay(3000); //느리고 자연스러운 속도
+                    //                //Thread.Sleep(3000);
+                    //}
+                    bTimer = new System.Timers.Timer(100);
+                    bTimer.Elapsed += browseLoop;
+                    bTimer.AutoReset = true;
+                    bTimer.Enabled = true;
                 }
                 else
                 {
-                    oriToSend.roll += split_by_n(oriToSend.roll, comparison[0], 10);
-                    dataSendRequested = true;
-                    Delay(2000); //느리고 자연스러운 속도
+                    //oriToSend.roll += split_by_n(oriToSend.roll, comparison[0], 10);
+                    //dataSendRequested = true;
+                    //Delay(3000); //느리고 자연스러운 속도
+
+                    bTimer = new System.Timers.Timer(100);
+                    bTimer.Elapsed += browseLoop;
+                    bTimer.AutoReset = true;
+                    bTimer.Enabled = true;
                 }
             }
         }
@@ -1274,6 +1297,7 @@ namespace FaceController
                     bList.smile = rdr.ReadSingle();
                     bList.upperLipRaise = rdr.ReadSingle();
 
+                    rdr.Close();
 
                     browse_expression(browse_button_click_count, bList);
 
