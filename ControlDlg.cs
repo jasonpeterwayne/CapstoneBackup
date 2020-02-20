@@ -73,7 +73,63 @@ namespace FaceController
         public float browRaise;
         public float cheekRaise;
         public float chinRaise;
-        public float dimper;
+        public float dimpler;
+
+        public float eyeClosure;
+        public float eyeWiden;
+        public float jawDrop;
+        public float lidTighten;
+        public float lipCornerDepressor;
+
+        public float lipPucker;
+        public float mouthOpen;
+        public float noseWrinkle;
+        public float smile;
+        public float upperLipRaise;
+    }
+
+    public struct compareList //저장된 파일의 변수값 20개를 불러오기 위한 중간 변수들과 이전 변수들을 비교하기 위한 구조체
+    {
+        public float headRoll;
+        public float headPitch;
+        public float headYaw;
+
+        public float eyeGazeX;
+        public float eyeGazeY;
+
+        public float browFurrow;
+        public float browRaise;
+        public float cheekRaise;
+        public float chinRaise;
+        public float dimpler;
+
+        public float eyeClosure;
+        public float eyeWiden;
+        public float jawDrop;
+        public float lidTighten;
+        public float lipCornerDepressor;
+
+        public float lipPucker;
+        public float mouthOpen;
+        public float noseWrinkle;
+        public float smile;
+        public float upperLipRaise;
+    }
+
+    public struct temptList //저장된 파일의 변수값 20개를 불러오기 위한 중간 변수들과 이전 변수들을 비교하기 위한 구조체
+    {
+        public float headRoll;
+        public float headPitch;
+        public float headYaw;
+
+        public float eyeGazeX;
+        public float eyeGazeY;
+
+        public float browFurrow;
+        public float browRaise;
+        public float cheekRaise;
+        public float chinRaise;
+        public float dimpler;
 
         public float eyeClosure;
         public float eyeWiden;
@@ -106,7 +162,6 @@ namespace FaceController
         static String filepath = null; //browse버튼 클릭 시 파일 경로 설정하는 변수
         static int browse_button_click_count = 0; //처음 목표값을 설정하는가 아닌가의 여부를 판단하기 위함 변수
         static float update = 0; //n분의 1만큼 업데이트할 때 사옹되는 변수
-        static float[] comparison; //이전 목표위치값들 20개를 저장하여 현재 목표위치값과 일치한지(중간에 목표위치값이 바뀔수도 있기에) 확인하는 어레이형 변수
 
         private static bool dataSendRequested = false;
 
@@ -192,6 +247,8 @@ namespace FaceController
         static myOrientation oriToSend = new myOrientation();
         static myPupil pupilToSend = new myPupil();
         static browseList bList = new browseList();
+        static compareList cList = new compareList();
+        static temptList tList = new temptList();
 
         static string localIP = myNetworks.myNetwork.GetLocalIPAddress();
 
@@ -238,38 +295,30 @@ namespace FaceController
 
         private void checkBox_controlBars_CheckedChanged(object sender, EventArgs e)
         {
+            checkBox_headRoll.Checked = true;
+            checkBox_headPitch.Checked = true;
+            checkBox_headYaw.Checked = true;
 
-        }
+            checkBox_gazeX.Checked = true;
+            checkBox_gazeY.Checked = true;
 
-        private void trackBar_headRoll_Scroll(object sender, EventArgs e)
-        {
-            TrackBar curTrackBar = (TrackBar)sender;
-            textBox_headRoll.Text = curTrackBar.Value.ToString();
+            checkBox_browRaise.Checked = true;
+            checkBox_browFurrow.Checked = true;
+            checkBox_cheekRaise.Checked = true;
+            checkBox_chinRaise.Checked = true;
+            checkBox_dimpler.Checked = true;
 
-            if (checkBox_headRoll.Checked)
-            {
-                oriToSend.roll = curTrackBar.Value;
-                //SendDataAll();
-                dataSendRequested = true;
-            }
-        }
+            checkBox_eyeClosure.Checked = true;
+            checkBox_eyeWiden.Checked = true;
+            checkBox_jawDrop.Checked = true;
+            checkBox_lidTighten.Checked = true;
+            checkBox_lipCornerDepressor.Checked = true;
 
-        private void textBox_headRoll_TextChanged(object sender, EventArgs e)
-        {
-            TextBox curTextBox = (TextBox)sender;
-            string text = curTextBox.Text;
-            int intVal;
-            if (Int32.TryParse(text, out intVal))
-            {
-                if ((intVal <= 180) && (intVal >= -180))
-                    trackBar_headRoll.Value = intVal;
-                    oriToSend.roll = intVal; 
-                    dataSendRequested = true;
-            }
-            else
-            {
-                return;
-            }
+            checkBox_lipPucker.Checked = true;
+            checkBox_mouthOpen.Checked = true;
+            checkBox_noseWrinkle.Checked = true;
+            checkBox_smile.Checked = true;
+            checkBox_upperLipRaise.Checked = true;
         }
 
         static private void SendDataAll()
@@ -307,7 +356,7 @@ namespace FaceController
                 eyeXScale = tempIntVal;
             else
                 textBox_eyeXScale.Text = eyeXScale.ToString();
-        }
+        } 
 
         private void button_eyeYScaleApply_Click(object sender, EventArgs e)
         {
@@ -316,6 +365,38 @@ namespace FaceController
                 eyeYScale = tempIntVal;
             else
                 textBox_eyeYScale.Text = eyeYScale.ToString();
+        }
+
+        //머리 움직임 조절 부분
+        private void trackBar_headRoll_Scroll(object sender, EventArgs e)
+        {
+            TrackBar curTrackBar = (TrackBar)sender;
+            textBox_headRoll.Text = curTrackBar.Value.ToString();
+
+            if (checkBox_headRoll.Checked)
+            {
+                oriToSend.roll = curTrackBar.Value;
+                //SendDataAll();
+                dataSendRequested = true;
+            }
+        } 
+
+        private void textBox_headRoll_TextChanged(object sender, EventArgs e)
+        {
+            TextBox curTextBox = (TextBox)sender;
+            string text = curTextBox.Text;
+            int intVal;
+            if (Int32.TryParse(text, out intVal))
+            {
+                if ((intVal <= 180) && (intVal >= -180))
+                    trackBar_headRoll.Value = intVal;
+                oriToSend.roll = intVal;
+                dataSendRequested = true;
+            }
+            else
+            {
+                return;
+            }
         }
 
         private void trackBar_headPitch_Scroll(object sender, EventArgs e)
@@ -349,16 +430,6 @@ namespace FaceController
             }
         }
 
-        private void checkBox_headPitch_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBox_headRoll_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void trackBar_headYaw_Scroll(object sender, EventArgs e)
         {
             TrackBar curTrackBar = (TrackBar)sender;
@@ -390,6 +461,7 @@ namespace FaceController
             }
         }
 
+        //시선 움직임 조절 부분
         private void trackBar_gazeX_Scroll(object sender, EventArgs e)
         {
             TrackBar curTrackBar = (TrackBar)sender;
@@ -459,6 +531,7 @@ namespace FaceController
             }
         }
 
+        //affectiva 불러오는 부분
         private void checkBox_affectiva_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox_affectiva.Checked)
@@ -502,6 +575,7 @@ namespace FaceController
             dataSendRequested = true;
         }
 
+        //affectiva에서 받아오는 byte단위 정보를 변환하여 다시 struct형 변수에 대입
         static facialExpressions DeserializeExpr(byte[] data)
         {
             int length = data.Length;
@@ -538,12 +612,13 @@ namespace FaceController
             return tempInst;
         }
 
+        //Form창 띄우기
         private void ControlDlg_Load(object sender, EventArgs e)
         {
 
         }
 
-        //16_expToSend(Scroll-TextChanged)
+        //15_expToSend(Scroll-TextChanged)
         private void trackBar_browFurrow_Scroll(object sender, EventArgs e)
         {
             TrackBar curTrackBar = (TrackBar)sender;
@@ -1114,29 +1189,58 @@ namespace FaceController
             return update;
         }
 
-        private static DateTime Delay(int MS)
-        {
-            DateTime ThisMoment = DateTime.Now;
-            TimeSpan duration = new TimeSpan(0, 0, 0, 0, MS);
-            DateTime AfterWards = ThisMoment.Add(duration);
-
-            while (AfterWards >= ThisMoment)
-            {
-                System.Windows.Forms.Application.DoEvents();
-                ThisMoment = DateTime.Now;
-            }
-
-            return DateTime.Now;
-        }
-
         private void browseLoop(object sender, ElapsedEventArgs e)  //반복호출함수
         {
-            float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
-            oriToSend.roll += tempt;
-            dataSendRequested = true;
-            //throw new NotImplementedException();
-        }
+            //N분의 1만큼 나눈 값들을 원래 위치값에 더함, 추후 거리 범위에 따른 숫자 조절 필요!
+            tList.headRoll = split_by_n(oriToSend.roll, bList.headRoll, 10); 
+            oriToSend.roll += tList.headRoll;
+            tList.headPitch = split_by_n(oriToSend.pitch, bList.headPitch, 10);
+            oriToSend.pitch += tList.headPitch;
+            tList.headYaw = split_by_n(oriToSend.yaw, bList.headYaw, 10);
+            oriToSend.yaw += tList.headYaw;
 
+            tList.eyeGazeX = split_by_n(pupilToSend.leftEyeX, bList.eyeGazeX, 10);
+            pupilToSend.leftEyeX += tList.eyeGazeX;
+            pupilToSend.rightEyeX += tList.eyeGazeX;
+            tList.eyeGazeY = split_by_n(pupilToSend.leftEyeY, bList.eyeGazeY, 10);
+            pupilToSend.leftEyeY += tList.eyeGazeY;
+            pupilToSend.rightEyeY += tList.eyeGazeY;
+
+            tList.browFurrow = split_by_n(expToSend.browFurrow, bList.browFurrow, 10);
+            expToSend.browFurrow += tList.browFurrow;
+            tList.browRaise = split_by_n(expToSend.browRaise, bList.browRaise, 10);
+            expToSend.browRaise += tList.browRaise;
+            tList.cheekRaise = split_by_n(expToSend.cheekRaise, bList.cheekRaise, 10);
+            expToSend.cheekRaise += tList.cheekRaise;
+            tList.chinRaise = split_by_n(expToSend.chinRaise, bList.chinRaise, 10);
+            expToSend.chinRaise += tList.chinRaise;
+            tList.dimpler = split_by_n(expToSend.dimpler, bList.dimpler, 10);
+            expToSend.dimpler += tList.dimpler;
+
+            tList.eyeClosure = split_by_n(expToSend.eyeClosure, bList.eyeClosure, 10);
+            expToSend.eyeClosure += tList.eyeClosure;
+            tList.eyeWiden = split_by_n(expToSend.eyeWiden, bList.eyeWiden, 10);
+            expToSend.eyeWiden += tList.eyeWiden;
+            tList.jawDrop = split_by_n(expToSend.jawDrop, bList.jawDrop, 10);
+            expToSend.jawDrop += tList.jawDrop;
+            tList.lidTighten = split_by_n(expToSend.lidTighten, bList.lidTighten, 10);
+            expToSend.lidTighten += tList.lidTighten;
+            tList.lipCornerDepressor = split_by_n(expToSend.lipCornerDepressor, bList.lipCornerDepressor, 10);
+            expToSend.lipCornerDepressor += tList.lipCornerDepressor;
+
+            tList.lipPucker = split_by_n(expToSend.lipPucker, bList.lipPucker, 10);
+            expToSend.lipPucker += tList.lipPucker;
+            tList.mouthOpen = split_by_n(expToSend.mouthOpen, bList.mouthOpen, 10);
+            expToSend.mouthOpen += tList.mouthOpen;
+            tList.noseWrinkle = split_by_n(expToSend.noseWrinkle, bList.noseWrinkle, 10);
+            expToSend.noseWrinkle += tList.noseWrinkle;
+            tList.smile = split_by_n(expToSend.smile, bList.smile, 10);
+            expToSend.smile += tList.smile;
+            tList.upperLipRaise = split_by_n(expToSend.upperLipRaise, bList.upperLipRaise, 10);
+            expToSend.upperLipRaise += tList.upperLipRaise;
+
+            dataSendRequested = true;
+        }
 
         public void browse_expression(int check, browseList bList)
         {
@@ -1144,22 +1248,37 @@ namespace FaceController
             //버튼을 클릭시 읽어오기만 하고 값을 대입하는 것은 여기서 작동하도록 해야 할 것 같음
             //그러면 버튼 클릭시 읽어오는 변수들을 전역으로 변경해야 할 듯...
             //float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
+            bTimer = new System.Timers.Timer(10); //1000 = 1sec
 
             if (check == 1) //버튼이 한번 눌렸을 경우(초기 시작)
             {
-                //여기서 초기 목표값들을 저장해서 다음 목표값과 비교를 위한 비교군 형성, 임시공간이니까 배열로 20개 만들어서 비교하면 될 듯
-                comparison = new float[] {bList.headRoll, bList.headPitch, bList.headYaw, bList.eyeGazeX, bList.eyeGazeY, bList.browFurrow, bList.browRaise, bList.cheekRaise, bList.chinRaise, bList.dimper, bList.eyeClosure, bList.eyeWiden, bList.jawDrop, bList.lidTighten, bList.lipCornerDepressor, bList.lipPucker, bList.mouthOpen, bList.noseWrinkle, bList.smile, bList.upperLipRaise};
-                //float tempt = split_by_n(oriToSend.roll, bList.headRoll, 10);
+                //여기서 초기 목표값들을 저장해서 다음 목표값과 비교를 위한 비교군 형성(cList)
+                cList.headRoll = bList.headRoll;
+                cList.headPitch = bList.headPitch;
+                cList.headYaw = bList.headYaw;
 
-                //for (int i = 0; i< 10; i++) 
-                //{
-                //    //Thread.Sleep(3000); Delay, Sleep 둘다 가능
-                //    oriToSend.roll += tempt;
-                //    dataSendRequested = true;
-                //    Delay(3000); //느리고 자연스러운 속도 
-                //}
+                cList.eyeGazeX = bList.eyeGazeX;
+                cList.eyeGazeY = bList.eyeGazeY;
 
-                bTimer = new System.Timers.Timer(100);
+                cList.browFurrow = bList.browFurrow;
+                cList.browRaise = bList.browRaise;
+                cList.cheekRaise = bList.cheekRaise;
+                cList.chinRaise = bList.chinRaise;
+                cList.dimpler = bList.dimpler;
+
+                cList.eyeClosure = bList.eyeClosure;
+                cList.eyeWiden = bList.eyeWiden;
+                cList.jawDrop = bList.jawDrop;
+                cList.lidTighten = bList.lidTighten;
+                cList.lipCornerDepressor = bList.lipCornerDepressor;
+
+                cList.lipPucker = bList.lipPucker;
+                cList.mouthOpen = bList.mouthOpen;
+                cList.noseWrinkle = bList.noseWrinkle;
+                cList.smile = bList.smile;
+                cList.upperLipRaise = bList.upperLipRaise;
+           
+                //bTimer = new System.Timers.Timer(10); //1000 = 1sec
                 bTimer.Elapsed += browseLoop;
                 bTimer.AutoReset = true;
                 bTimer.Enabled = true;
@@ -1175,30 +1294,60 @@ namespace FaceController
                 //원래 위치값에서 목표위치까지 n분할로 나눠주는 함수 호출(리턴값을 돌려줘서 현재 위치값 업데이트 필요)
                 //}
 
-                if (bList.headRoll != comparison[0])
+                if (bList.headRoll != cList.headRoll 
+                    || bList.headPitch != cList.headPitch 
+                    || bList.headYaw != cList.headYaw 
+                    || bList.eyeGazeX != cList.eyeGazeX 
+                    || bList.eyeGazeY != cList.eyeGazeY 
+                    || bList.browFurrow != cList.browFurrow 
+                    || bList.browRaise != cList.browRaise 
+                    || bList.cheekRaise != cList.cheekRaise
+                    || bList.chinRaise != cList.chinRaise
+                    || bList.dimpler != cList.dimpler
+                    || bList.eyeClosure != cList.eyeClosure
+                    || bList.eyeWiden != cList.eyeWiden
+                    || bList.jawDrop != cList.jawDrop
+                    || bList.lidTighten != cList.lidTighten
+                    || bList.lipCornerDepressor != cList.lipCornerDepressor
+                    || bList.lipPucker != cList.lipPucker
+                    || bList.mouthOpen != cList.mouthOpen
+                    || bList.noseWrinkle != cList.noseWrinkle
+                    || bList.smile != cList.smile
+                    || bList.upperLipRaise != cList.upperLipRaise)
                 {
-                    comparison = new float[] { bList.headRoll, bList.headPitch, bList.headYaw, bList.eyeGazeX, bList.eyeGazeY, bList.browFurrow, bList.browRaise, bList.cheekRaise, bList.chinRaise, bList.dimper, bList.eyeClosure, bList.eyeWiden, bList.jawDrop, bList.lidTighten, bList.lipCornerDepressor, bList.lipPucker, bList.mouthOpen, bList.noseWrinkle, bList.smile, bList.upperLipRaise};
+                    cList.headRoll = bList.headRoll;
+                    cList.headPitch = bList.headPitch;
+                    cList.headYaw = bList.headYaw;
 
-                    //for (int i = 0; i < 10; i++)
-                    //{
-                    //    //Thread.Sleep(3000); Delay, Sleep 둘다 가능
-                    //    oriToSend.roll += tempt;
-                    //    dataSendRequested = true;
-                    //    Delay(3000); //느리고 자연스러운 속도
-                    //                //Thread.Sleep(3000);
-                    //}
-                    bTimer = new System.Timers.Timer(100);
+                    cList.eyeGazeX = bList.eyeGazeX;
+                    cList.eyeGazeY = bList.eyeGazeY;
+
+                    cList.browFurrow = bList.browFurrow;
+                    cList.browRaise = bList.browRaise;
+                    cList.cheekRaise = bList.cheekRaise;
+                    cList.chinRaise = bList.chinRaise;
+                    cList.dimpler = bList.dimpler;
+
+                    cList.eyeClosure = bList.eyeClosure;
+                    cList.eyeWiden = bList.eyeWiden;
+                    cList.jawDrop = bList.jawDrop;
+                    cList.lidTighten = bList.lidTighten;
+                    cList.lipCornerDepressor = bList.lipCornerDepressor;
+
+                    cList.lipPucker = bList.lipPucker;
+                    cList.mouthOpen = bList.mouthOpen;
+                    cList.noseWrinkle = bList.noseWrinkle;
+                    cList.smile = bList.smile;
+                    cList.upperLipRaise = bList.upperLipRaise;
+
+                    //bTimer = new System.Timers.Timer(100);
                     bTimer.Elapsed += browseLoop;
                     bTimer.AutoReset = true;
                     bTimer.Enabled = true;
                 }
                 else
                 {
-                    //oriToSend.roll += split_by_n(oriToSend.roll, comparison[0], 10);
-                    //dataSendRequested = true;
-                    //Delay(3000); //느리고 자연스러운 속도
-
-                    bTimer = new System.Timers.Timer(100);
+                    //bTimer = new System.Timers.Timer(100);
                     bTimer.Elapsed += browseLoop;
                     bTimer.AutoReset = true;
                     bTimer.Enabled = true;
@@ -1219,59 +1368,6 @@ namespace FaceController
 
                 using (BinaryReader rdr = new BinaryReader(File.Open(filepath, FileMode.Open)))
                 {
-                    //각 데이타 타입별로 다양한 Read 메서드를 사용한다
-                    //float headRoll = rdr.ReadSingle();
-                    //float headPitch = rdr.ReadSingle();
-                    //float headYaw = rdr.ReadSingle();
-
-                    //float eyeGazeX = rdr.ReadSingle();
-                    //float eyeGazeY = rdr.ReadSingle();
-
-                    //float browFurrow = rdr.ReadSingle();
-                    //float browRaise = rdr.ReadSingle();
-                    //float cheekRaise = rdr.ReadSingle();
-                    //float chinRaise = rdr.ReadSingle();
-                    //float dimper = rdr.ReadSingle();
-
-                    //float eyeClosure = rdr.ReadSingle();
-                    //float eyeWiden = rdr.ReadSingle();
-                    //float jawDrop = rdr.ReadSingle();
-                    //float lidTighten = rdr.ReadSingle();
-                    //float lipCornerDepressor = rdr.ReadSingle();
-
-                    //float lipPucker = rdr.ReadSingle();
-                    //float mouthOpen = rdr.ReadSingle();
-                    //float noseWrinkle = rdr.ReadSingle();
-                    //float smile = rdr.ReadSingle();
-                    //float upperLipRaise = rdr.ReadSingle();
-
-                    //oriToSend.roll = headRoll;
-                    //oriToSend.pitch = headPitch;
-                    //oriToSend.yaw = headYaw;
-
-                    //pupilToSend.leftEyeX = eyeGazeX;
-                    //pupilToSend.rightEyeX = eyeGazeX;
-                    //pupilToSend.leftEyeY = eyeGazeY;
-                    //pupilToSend.rightEyeY = eyeGazeY;
-
-                    //expToSend.browFurrow = browFurrow;
-                    //expToSend.browRaise = browRaise;
-                    //expToSend.cheekRaise = cheekRaise;
-                    //expToSend.chinRaise = chinRaise;
-                    //expToSend.dimpler = dimper;
-
-                    //expToSend.eyeClosure = eyeClosure;
-                    //expToSend.eyeWiden = eyeWiden;
-                    //expToSend.jawDrop = jawDrop;
-                    //expToSend.lidTighten = lidTighten;
-                    //expToSend.lipCornerDepressor = lipCornerDepressor;
-
-                    //expToSend.lipPucker = lipPucker;
-                    //expToSend.mouthOpen = mouthOpen;
-                    //expToSend.noseWrinkle = noseWrinkle;
-                    //expToSend.smile = smile;
-                    //expToSend.upperLipRaise = upperLipRaise;
-
                     bList.headRoll = rdr.ReadSingle();
                     bList.headPitch = rdr.ReadSingle();
                     bList.headYaw = rdr.ReadSingle();
@@ -1283,7 +1379,7 @@ namespace FaceController
                     bList.browRaise = rdr.ReadSingle();
                     bList.cheekRaise = rdr.ReadSingle();
                     bList.chinRaise = rdr.ReadSingle();
-                    bList.dimper = rdr.ReadSingle();
+                    bList.dimpler = rdr.ReadSingle();
 
                     bList.eyeClosure = rdr.ReadSingle();
                     bList.eyeWiden = rdr.ReadSingle();
@@ -1300,8 +1396,6 @@ namespace FaceController
                     rdr.Close();
 
                     browse_expression(browse_button_click_count, bList);
-
-                    //dataSendRequested = true;
                 }
             }
         }
@@ -1386,7 +1480,7 @@ namespace FaceController
             bList.browRaise = 0;
             bList.cheekRaise = 0;
             bList.chinRaise = 0;
-            bList.dimper = 0;
+            bList.dimpler = 0;
 
             bList.eyeClosure = 0;
             bList.eyeWiden = 0;
