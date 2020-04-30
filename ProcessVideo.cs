@@ -57,17 +57,23 @@ namespace csharp_sample_app
             public float upperLipRaise;
         }
 
-        //struct faceEmotion
-        //{
-        //    public float Joy;
-        //    public float Sadness;
-        //    public float Anger;
-        //    public float Fear;
-        //    public float Disgust;
-        //    public float Surprise;
-        //    public float Contempt;
-        //    public float maxEmo;
-        //}
+        struct faceEmotion
+        {
+            public float Joy;
+            public float Sadness;
+            public float Anger;
+            public float Fear;
+            public float Disgust;
+            public float Surprise;
+            public float Contempt;
+            public float maxEmo;
+        }
+
+        struct pythonLabel
+        {
+            public int num;
+        }
+
         // expressions
         // refere following links
         // http://affectiva.github.io/developerportal/pages/platforms/v3_1/cpp/classdocs/affdex-native/structaffdex_1_1_expressions.html
@@ -105,6 +111,7 @@ namespace csharp_sample_app
         }
 
         int myFlag = 0;
+        int serverChange = 0;
 
         public void onImageResults(Dictionary<int, Affdex.Face> faces, Affdex.Frame frame)
         {
@@ -144,8 +151,10 @@ namespace csharp_sample_app
                 //initialize socket for data transfer to java server
                 //myNetworks.myNetwork.StartClient("192.168.123.2", 55555);
                 myNetworks.myNetwork.StartClient("localhost", 54322);
-                myFlag = 1;
+                myNetworks4.myNetwork4P.Main(9999);
+                myFlag = 1;  
             }
+
 
             foreach (KeyValuePair<int, Affdex.Face> pair in faces)
             {
@@ -220,18 +229,18 @@ namespace csharp_sample_app
                     //System.Console.WriteLine("\n"+sendStr1+ "\n");
                     //flag prevents repeated socket creation
 
-                    //faceEmotion curEmo = new faceEmotion();
-                    //for (int i = 0; i < a; i++)
-                    //{
-                    //    if (emotionArr[i] == "Joy") curEmo.Joy = indexArr[i];
-                    //    else if (emotionArr[i] == "Sadness") curEmo.Sadness = indexArr[i];
-                    //    else if (emotionArr[i] == "Anger") curEmo.Anger = indexArr[i];
-                    //    else if (emotionArr[i] == "Fear") curEmo.Fear = indexArr[i];
-                    //    else if (emotionArr[i] == "Disgust") curEmo.Disgust = indexArr[i];
-                    //    else if (emotionArr[i] == "Surprise") curEmo.Surprise = indexArr[i];
-                    //    else if (emotionArr[i] == "Contempt") curEmo.Contempt = indexArr[i];
-                    //}
-                    //curEmo.maxEmo = maxValue;
+                    faceEmotion curEmo = new faceEmotion();
+                    for (int i = 0; i < a; i++)
+                    {
+                        if (Convert.ToString(valence) == "20" && Convert.ToString(arousal) == "15") curEmo.Joy = indexArr[i];
+                        else if (Convert.ToString(valence) == "-17" && Convert.ToString(arousal) == "-6") curEmo.Sadness = indexArr[i];
+                        else if (Convert.ToString(valence) == "-13" && Convert.ToString(arousal) == "16") curEmo.Anger = indexArr[i];
+                        else if (Convert.ToString(valence) == "-15" && Convert.ToString(arousal) == "20") curEmo.Fear = indexArr[i];
+                        else if (Convert.ToString(valence) == "-13" && Convert.ToString(arousal) == "13") curEmo.Disgust = indexArr[i];
+                        else if (Convert.ToString(valence) == "0" && Convert.ToString(arousal) == "13") curEmo.Surprise = indexArr[i];
+                        else if (Convert.ToString(valence) == "-13" && Convert.ToString(arousal) == "6") curEmo.Contempt = indexArr[i];
+                    }
+                    curEmo.maxEmo = maxValue;
 
                     facialExpressions curExprs;
                     curExprs.attention = face.Expressions.Attention;
@@ -258,7 +267,9 @@ namespace csharp_sample_app
 
                     string tempOut = string.Format("{0}    {1}  {2} {3}",
                         curExprs.cheekRaise, curExprs.smile, curExprs.lipSuck, curExprs.chinRaise);
-                    System.Console.WriteLine(tempOut + "\n");
+                    //System.Console.WriteLine(tempOut + "\n");
+
+                    //System.Console.WriteLine(myNetworks4.myNetwork4P.pythonLabel() + "\n");
 
                     byte[] expRawdDta = Serialize(curExprs);
 
@@ -271,15 +282,24 @@ namespace csharp_sample_app
                     //Serialize(tempOrientation, data2send);
 
                     //얼굴 감정 분석 결과를 보내는 코드
-                    //byte[] emoRawdata = Serialize(curEmo);
+                    byte[] emoRawdata = Serialize(curEmo);
+
+                    //System.Console.WriteLine("sfdhgaetrhartfhbagfbrstfdhbatfgearfgaertg\n");
+                    pythonLabel tempt;
+                    tempt.num = myNetworks4.myNetwork4P.pythonLabel();
+                    //System.Console.WriteLine("sfdhgaetrhartfhbagfbrstfdhbatfgearfgaertg\n");
+                    //System.Console.WriteLine(tempt.num + "\n");
+
+                    byte[] labelData = Serialize(tempt);
 
                     //byte[] data2send = new byte[expRawdDta.Length + oriRawdata.Length + 1];
-                    byte[] data2send = new byte[expRawdDta.Length + oriRawdata.Length + 1];
+                    byte[] data2send = new byte[expRawdDta.Length + oriRawdata.Length + emoRawdata.Length + labelData.Length + 1];
 
                     data2send[0] = (byte)(data2send.Length);
                     Array.Copy(oriRawdata, 0, data2send, 1, oriRawdata.Length);
                     Array.Copy(expRawdDta, 0, data2send, (1 + oriRawdata.Length), expRawdDta.Length);
-                    //Array.Copy(emoRawdata, 0, data2send, (1 + oriRawdata.Length + expRawdDta.Length), emoRawdata.Length);
+                    Array.Copy(emoRawdata, 0, data2send, (1 + oriRawdata.Length + expRawdDta.Length), emoRawdata.Length);
+                    Array.Copy(labelData, 0, data2send, (1 + oriRawdata.Length + expRawdDta.Length + emoRawdata.Length), labelData.Length);
 
                     //Hifza
                     //send data to java server through socket
@@ -463,22 +483,22 @@ namespace csharp_sample_app
                 //    }
                 //}
 
-                g.DrawString("EXPRESSIONS", aFont, bluePen.Brush, new PointF(br.X, padding += (spacing * 2)));
-                foreach (PropertyInfo prop in typeof(Affdex.Expressions).GetProperties())
-                {
-                    float value = (float)prop.GetValue(face.Expressions, null);
-                    String c = String.Format("{0}: {1:0.00}", prop.Name, value);
-                    g.DrawString(c, aFont, (value > 50) ? whitePen.Brush : redPen.Brush, new PointF(br.X, padding += spacing));
-                }
-
-                //g.DrawString("EMOTIONS", aFont, bluePen.Brush, new PointF(br.X, padding += (spacing * 2)));
-
-                //foreach (PropertyInfo prop in typeof(Affdex.Emotions).GetProperties())
+                //g.DrawString("EXPRESSIONS", aFont, bluePen.Brush, new PointF(br.X, padding += (spacing * 2)));
+                //foreach (PropertyInfo prop in typeof(Affdex.Expressions).GetProperties())
                 //{
-                //    float value = (float)prop.GetValue(face.Emotions, null);
+                //    float value = (float)prop.GetValue(face.Expressions, null);
                 //    String c = String.Format("{0}: {1:0.00}", prop.Name, value);
                 //    g.DrawString(c, aFont, (value > 50) ? whitePen.Brush : redPen.Brush, new PointF(br.X, padding += spacing));
                 //}
+
+                g.DrawString("EMOTIONS", aFont, bluePen.Brush, new PointF(br.X, padding += (spacing * 2)));
+
+                foreach (PropertyInfo prop in typeof(Affdex.Emotions).GetProperties())
+                {
+                    float value = (float)prop.GetValue(face.Emotions, null);
+                    String c = String.Format("{0}: {1:0.00}", prop.Name, value);
+                    g.DrawString(c, aFont, (value > 50) ? whitePen.Brush : redPen.Brush, new PointF(br.X, padding += spacing));
+                }
 
             }
         }

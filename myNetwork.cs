@@ -35,53 +35,27 @@ namespace myNetworks
             t.Start();
         }
 
-        public static bool StartClient(string hostIP, int portNum)
+        public static void StartClient(string hostIP, int portNum)
         {
-            try
-            {
-                client = new TcpClient(hostIP, portNum);
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-            if (!client.Connected) return false ;
+            client = new TcpClient(hostIP, portNum);
+            if (!client.Connected) return;
             s = client.GetStream();
             sr = new StreamReader(s);
             sw = new StreamWriter(s);
             bsr = new BinaryReader(s);
             bsw = new BinaryWriter(s);
             sw.AutoFlush = true;
-            return true;
-        }
-
-        public static string GetLocalIPAddress()
-        {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    return ip.ToString();
-                }
-            }
-            throw new Exception("No network adapters with an IPv4 address in the system!");
         }
 
         public static void CloseClient()
         {
-            try
-            {
-                if (!client.Connected) return;
-                sr.Close();
-                sw.Close();
-                bsr.Close();
-                bsw.Close();
-                s.Close();
-                client.Close();
-            }
-            catch (Exception e)
-            { }
+            if (!client.Connected) return;
+            sr.Close();
+            sw.Close();
+            bsr.Close();
+            bsw.Close();
+            s.Close();
+            client.Close();
         }
 
         public static bool SendData(string data)
@@ -96,7 +70,7 @@ namespace myNetworks
                 sw.WriteLine(data); // no need to add a code for flush because we set the autoflush parameter by true
                 return true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 System.Console.WriteLine("Server connection interrupted.");
                 return false;
@@ -145,14 +119,13 @@ namespace myNetworks
                     while (true)
                     {
                         //string name = sr.ReadLine();
-                        byte[] buffer = new byte[1024];
-                        //buffer = bssr.ReadBytes(1024);
-                        int iReadLength = bssr.Read(buffer, 0, 1024);
+                        byte[] buffer = new byte[512];
+                        //buffer = bssr.ReadBytes(512);
+                        int iReadLength = bssr.Read(buffer, 0, 512);
 
                         if (iReadLength > 0)
                         {
-                            if (iReadLength == (int)buffer[0])
-                                FaceController.ControlDlg.AffectivaReceived(buffer, iReadLength);
+
                         }
                         bssw.Write(buffer, 0, iReadLength);
                         bssw.Flush();
