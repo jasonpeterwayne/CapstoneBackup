@@ -48,7 +48,7 @@ namespace FaceController
         public float lipStretch;
 
         public float lipSuck;
-        public float mouthOpen;  
+        public float mouthOpen;
         public float noseWrinkle;
         public float smile;
         public float smirk;
@@ -96,6 +96,11 @@ namespace FaceController
         public float maxEmo;
     }
 
+    struct pythonLabel
+    {
+        public int num;
+    }
+
     public partial class ControlDlg : Form
     {
         public ControlDlg()
@@ -105,13 +110,15 @@ namespace FaceController
             size_ori = Marshal.SizeOf(oriToSend);
             size_pupil = Marshal.SizeOf(pupilToSend);
             size_exp = Marshal.SizeOf(expToSend);
-            //size_emo = Marshal.SizeOf(curEmo);
+            size_emo = Marshal.SizeOf(curEmo);
+            size_label = Marshal.SizeOf(dataLabel);
         }
 
         static int size_ori;
         static int size_pupil;
         static int size_exp;
-        //static int size_emo;
+        static int size_emo;
+        static int size_label;
 
         static String filepath = null; //browse버튼 클릭 시 파일 경로 설정하는 변수
         static int browse_button_click_count = 0; //처음 목표값을 설정하는가 아닌가의 여부를 판단하기 위함 변수
@@ -202,7 +209,8 @@ namespace FaceController
         static facialExpressions expToSend = new facialExpressions();
         static myOrientation oriToSend = new myOrientation();
         static myPupil pupilToSend = new myPupil();
-        //static faceEmotion curEmo = new faceEmotion(); //affectiva에서 받아오는 이모션 7개+최대 emotion값
+        static faceEmotion curEmo = new faceEmotion(); //affectiva에서 받아오는 이모션 7개+최대 emotion값
+        static pythonLabel dataLabel = new pythonLabel();
         static List bList = new List();
         static List cList = new List();
         static List pList = new List(); //위치를 천천히 update하기위해 이전값들을 저장하는 구조체
@@ -548,15 +556,32 @@ namespace FaceController
             Array.Copy(buffer, 1, oriData, 0, size_ori);
             byte[] exprData = new byte[size_exp];
             Array.Copy(buffer, (1 + size_ori), exprData, 0, size_exp);
-            //byte[] emoData = new byte[size_emo];
-            //Array.Copy(buffer, (1 + size_ori + size_exp), emoData, 0, size_emo);
+            byte[] emoData = new byte[size_emo];
+            Array.Copy(buffer, (1 + size_ori + size_exp), emoData, 0, size_emo);
+            byte[] LabelEmo = new byte[size_label];
+            Array.Copy(buffer, (1 + size_ori + size_exp + size_emo), LabelEmo, 0, size_label);
 
             oriToSend = DeserializeOri(oriData);
             expToSend = DeserializeExpr(exprData);
-            //curEmo = DeserializeEmo(emoData);
+            curEmo = DeserializeEmo(emoData);
+            dataLabel = DeserializeLabel(LabelEmo);
+
+           Console.WriteLine(dataLabel.num);
 
             //SendDataAll();
             dataSendRequested = true;
+        }
+
+        static pythonLabel DeserializeLabel(byte[] data)
+        {
+            int length = data.Length;
+            pythonLabel tempInst = new pythonLabel();
+            GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+            IntPtr buffer = handle.AddrOfPinnedObject();
+            tempInst = (pythonLabel)Marshal.PtrToStructure(buffer, typeof(pythonLabel));
+            //Marshal.StructureToPtr(myStructure, buffer, false);
+            handle.Free();
+            return tempInst;
         }
 
         //affectiva에서 받아오는 byte단위 정보를 변환하여 다시 struct형 변수에 대입
@@ -611,7 +636,7 @@ namespace FaceController
         //Form창 띄우기
         private void ControlDlg_Load(object sender, EventArgs e)
         {
-
+            
         }
 
         //15_expToSend(Scroll-TextChanged)
@@ -1327,7 +1352,7 @@ namespace FaceController
         public void browse_expression_avatar()
         {
             savePreviousList();
-            
+
             if (bList.headRoll != cList.headRoll
                 || bList.headPitch != cList.headPitch
                 || bList.headYaw != cList.headYaw
@@ -1355,12 +1380,12 @@ namespace FaceController
                 bTimer.AutoReset = true;
                 bTimer.Enabled = true;
             }
-             else
-             {
+            else
+            {
                 bTimer.Elapsed += browseLoop;
                 bTimer.AutoReset = true;
                 bTimer.Enabled = true;
-             }
+            }
         }
 
         public void button_browse_Click(object sender, EventArgs e)
@@ -1563,7 +1588,7 @@ namespace FaceController
             }
         }
 
-        static private void neutral()
+        static private void smile()
         {
             using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\smile1.bin", FileMode.Open)))
             {
@@ -1596,49 +1621,535 @@ namespace FaceController
             }
         }
 
+        static private void neutral()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\neutral.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+
+        static private void anger()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\angry.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+
+        static private void sadness()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\sadness.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+        static private void Surprise()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\surprise.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+        static private void Borded()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\Boring.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+        static private void Curious()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\curious.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+        static private void bad1()
+        {
+            using (BinaryReader rdr = new BinaryReader(File.Open(@"C:\Users\SIRLab\Desktop\Face Simulator\FaceController (20190109)\FaceController\bad1.bin", FileMode.Open)))
+            {
+                bList.headRoll = rdr.ReadSingle();
+                bList.headPitch = rdr.ReadSingle();
+                bList.headYaw = rdr.ReadSingle();
+
+                bList.eyeGazeX = rdr.ReadSingle();
+                bList.eyeGazeY = rdr.ReadSingle();
+
+                bList.browFurrow = rdr.ReadSingle();
+                bList.browRaise = rdr.ReadSingle();
+                bList.cheekRaise = rdr.ReadSingle();
+                bList.chinRaise = rdr.ReadSingle();
+                bList.dimpler = rdr.ReadSingle();
+
+                bList.eyeClosure = rdr.ReadSingle();
+                bList.eyeWiden = rdr.ReadSingle();
+                bList.jawDrop = rdr.ReadSingle();
+                bList.lidTighten = rdr.ReadSingle();
+                bList.lipCornerDepressor = rdr.ReadSingle();
+
+                bList.lipPucker = rdr.ReadSingle();
+                bList.mouthOpen = rdr.ReadSingle();
+                bList.noseWrinkle = rdr.ReadSingle();
+                bList.smile = rdr.ReadSingle();
+                bList.upperLipRaise = rdr.ReadSingle();
+
+                rdr.Close();
+            }
+        }
+
+        static private void smilec()
+        {
+            bList.headRoll = 0;
+            bList.headPitch = 0;
+            bList.headYaw = 0;
+
+            bList.eyeGazeX = 0;
+            bList.eyeGazeY = 0;
+
+            bList.browFurrow = Convert.ToSingle(-14);
+            bList.browRaise = Convert.ToSingle(4);
+            bList.cheekRaise = Convert.ToSingle(88);
+            bList.chinRaise = Convert.ToSingle(65);
+            bList.dimpler = 0;
+
+            bList.eyeClosure = 0;
+            bList.eyeWiden = 0;
+            bList.jawDrop = 0;
+            bList.lidTighten = 0;
+            bList.lipCornerDepressor = 0;
+
+            bList.lipPucker = 0;
+            bList.mouthOpen = 0;
+            bList.noseWrinkle = 0;
+            bList.smile = Convert.ToSingle(132);
+            bList.upperLipRaise = 0;
+        }
+
+        static private void neutralc()
+        {
+            bList.headRoll = 0;
+            bList.headPitch = 0;
+            bList.headYaw = 0;
+
+            bList.eyeGazeX = 0;
+            bList.eyeGazeY = 0;
+
+            bList.browFurrow = 0;
+            bList.browRaise = Convert.ToSingle(-11);
+            bList.cheekRaise = Convert.ToSingle(12);
+            bList.chinRaise = 0;
+            bList.dimpler = Convert.ToSingle(91);
+
+            bList.eyeClosure = 0;
+            bList.eyeWiden = Convert.ToSingle(-78);
+            bList.jawDrop = 0;
+            bList.lidTighten = Convert.ToSingle(1);
+            bList.lipCornerDepressor = Convert.ToSingle(-1);
+
+            bList.lipPucker = 0;
+            bList.mouthOpen = Convert.ToSingle(57);
+            bList.noseWrinkle = 0;
+            bList.smile = 0;
+            bList.upperLipRaise = 0;
+        }
+
+        static private void badc()
+        {
+            bList.headRoll = 0;
+            bList.headPitch = 0;
+            bList.headYaw = 0;
+
+            bList.eyeGazeX = 0;
+            bList.eyeGazeY = 0;
+
+            bList.browFurrow = Convert.ToSingle(180);
+            bList.browRaise = 0;
+            bList.cheekRaise = 0;
+            bList.chinRaise = 0;
+            bList.dimpler = Convert.ToSingle(91);
+
+            bList.eyeClosure = 0;
+            bList.eyeWiden = 0;
+            bList.jawDrop = 0;
+            bList.lidTighten = 0;
+            bList.lipCornerDepressor = 0;
+
+            bList.lipPucker = Convert.ToSingle(-50);
+            bList.mouthOpen = Convert.ToSingle(-52);
+            bList.noseWrinkle = Convert.ToSingle(4);
+            bList.smile = Convert.ToSingle(-113);
+            bList.upperLipRaise = 0;
+        }
+
         private void set_avatar_response()
         {
+
             cTimer = new System.Timers.Timer(20);
 
-            if (expToSend.attention >= 80.0 &&
-                expToSend.browFurrow <= 15.0 &&
-                expToSend.browRaise <= 15.0 &&
-                expToSend.cheekRaise <= 15.0 &&
-                expToSend.chinRaise <= 15.0 &&
-                expToSend.dimpler <= 15.0 &&
-                expToSend.eyeClosure <= 15.0 &&
-                expToSend.eyeWiden <= 15.0 &&
-                expToSend.innerBrowRaise <= 15.0 &&
-                expToSend.jawDrop <= 15.0 &&
-                expToSend.lidTighten <= 15.0 &&
-                expToSend.lipCornerDepressor <= 15.0 &&
-                expToSend.lipPress <= 15.0 &&
-                expToSend.lipPucker <= 15.0 &&
-                expToSend.lipStretch <= 15.0 &&
-                expToSend.lipSuck <= 15.0 &&
-                expToSend.mouthOpen <= 15.0 &&
-                expToSend.noseWrinkle <= 15.0 &&
-                expToSend.smile <= 15.0 &&
-                expToSend.smirk <= 15.0 &&
-                expToSend.upperLipRaise <= 15.0)
+            if (dataLabel.num == 1)
             {
+                FaceController.zigbeeProgram.zigbeeMain(dataLabel.num);
+                //Form2 frm = new Form2();
+                //frm.Show();
+
                 savePreviousList();
-                talking();
+                smilec();
                 updateCompareList();
 
                 cTimer.Elapsed += browseLoop;
                 cTimer.AutoReset = true;
                 cTimer.Enabled = true;
             }
-            else if (expToSend.attention >= 80.0 && expToSend.smile >= 80)
+            else if (dataLabel.num == 2)
             {
                 savePreviousList();
-                neutral();
+                badc();
                 updateCompareList();
 
                 cTimer.Elapsed += browseLoop;
                 cTimer.AutoReset = true;
                 cTimer.Enabled = true;
+            }
+            //else if (dataLabel.num == 3)
+            //{
+            //    savePreviousList();
+            //    Surprise();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //if (dataLabel.num == 4 && curEmo.maxEmo == curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    smile();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (dataLabel.num == 4 && curEmo.maxEmo != curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    neutral();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (dataLabel.num == 5 && curEmo.maxEmo == curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    neutral();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (dataLabel.num == 5 && curEmo.maxEmo != curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    bad1();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //if (curEmo.maxEmo == curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    smilec();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (curEmo.maxEmo != curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    badc();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+
+
+            //if (expToSend.attention >= 80.0 &&
+            //    expToSend.browFurrow <= 15.0 &&
+            //    expToSend.browRaise <= 15.0 &&
+            //    expToSend.cheekRaise <= 15.0 &&
+            //    expToSend.chinRaise <= 15.0 &&
+            //    expToSend.dimpler <= 15.0 &&
+            //    expToSend.eyeClosure <= 15.0 &&
+            //    expToSend.eyeWiden <= 15.0 &&
+            //    expToSend.innerBrowRaise <= 15.0 &&
+            //    expToSend.jawDrop <= 15.0 &&
+            //    expToSend.lidTighten <= 15.0 &&
+            //    expToSend.lipCornerDepressor <= 15.0 &&
+            //    expToSend.lipPress <= 15.0 &&
+            //    expToSend.lipPucker <= 15.0 &&
+            //    expToSend.lipStretch <= 15.0 &&
+            //    expToSend.lipSuck <= 15.0 &&
+            //    expToSend.mouthOpen <= 15.0 &&
+            //    expToSend.noseWrinkle <= 15.0 &&
+            //    expToSend.smile <= 15.0 &&
+            //    expToSend.smirk <= 15.0 &&
+            //    expToSend.upperLipRaise <= 15.0)
+            //{
+            //    savePreviousList();
+            //    talking();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (expToSend.attention >= 80.0 && expToSend.smile >= 80)
+            //{
+            //    savePreviousList();
+            //    neutral();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (curEmo.maxEmo == curEmo.Anger)
+            //{
+            //    savePreviousList();
+            //    anger();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (curEmo.maxEmo == curEmo.Sadness)
+            //{
+            //    savePreviousList();
+            //    sadness();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (curEmo.maxEmo == curEmo.Surprise)
+            //{
+            //    savePreviousList();
+            //    Surprise();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (curEmo.maxEmo == curEmo.Contempt)
+            //{
+            //    savePreviousList();
+            //    Borded();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+            //else if (curEmo.maxEmo == curEmo.Joy)
+            //{
+            //    savePreviousList();
+            //    Curious();
+            //    updateCompareList();
+
+            //    cTimer.Elapsed += browseLoop;
+            //    cTimer.AutoReset = true;
+            //    cTimer.Enabled = true;
+            //}
+        }
+
+        //private void loop_zigbee()
+        //{
+        //    //FaceController.zigbeeProgram.zigbeeMain(1);
+        //    while (true)
+        //    {
+        //        FaceController.zigbeeProgram.zigbeeMain(dataLabel.num);
+        //    }
+        //}
+
+        private void checkBox_zigbee_CheckedChanged(object sender, EventArgs e)
+        {
+
+            if (checkBox_zigbee.Checked)
+            {
+
+                System.Console.WriteLine("hdgfkagsfdglaerg!");
+
+                Console.WriteLine("below" + dataLabel.num);
+                //loop_zigbee();
+                //FaceController.zigbeeProgram.zigbeeMain(1);
+                //FaceController.zigbeeProgram.zigbeeMain(dataLabel.num);
+
+
+                System.Console.WriteLine("retkejrhgleurglielfgjlejrgljergkjsdfgjlekjfgblejrgerg!");
+
             }
         }
     }
